@@ -1,6 +1,8 @@
 # tCam-mini-with-Tensorflow-Lite
 Incorporate machine learning capability into tCam-mini
 
+***Special thank to Dan Julio for clarification on all of my inquiries regarding the project and his hardware***
+
 This project is based on the tCam thermal imaging sensor made by Dan Julio.
 [Here is the original repository](https://github.com/danjulio/tCam)
 
@@ -19,5 +21,8 @@ itself does not move.
 |   Dry floor    | 
 | Human in frame |
 |  Mopped floor  |
+
+
+//To be continue
 
 
