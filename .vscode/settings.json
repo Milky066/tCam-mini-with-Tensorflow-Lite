@@ -1,0 +1,13 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.adapterTargetName": "esp32",
+    "files.associations": {
+        "esp_system.h": "c",
+        "rsp_task.h": "c",
+        "unistd.h": "c",
+        "stdio.h": "c",
+        "tflite_task.h": "c",
+        "cmath": "cpp",
+        "complex": "cpp"
+    }
+}
