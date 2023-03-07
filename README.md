@@ -30,13 +30,33 @@ each pixel data ranges from 0 to 65535 which represents temperature.
 
 Tensorflow image recognition model consist of 6 layers
 
-
-
 |        | Conv2D | MaxPool2D | Conv2D | MaxPool2D | Flatten | Dense |
 |--------|--------|-----------|--------|-----------|---------|-------|
 | Filter |    6   |     -     |   3    |     -     |    -    |   -   |
 | Kernel |  3 x 3 |     -     | 3 x 3  |     -     |    -    |   -   |
 |PoolSize|    -   |   2 x 2   |    -   |   2 x 2   |    -    |   -   |
 | Node   |    -   |     -     |    -   |     -     |    -    |   4   |
+
+NOTE: The Python file used will be uploaded later on, I'll need to tidy things up.
+
+The model input is **30 x 40 pixels** in resolution, this is the most optimal value memory wise as well as accuracy wise.
+
+Original Tensorflow library uses too much memory and is computationally too complex to use in an embedded system.
+Tensorflow Lite compresses the orignal model down to make operations in embedded systems possible.
+List of the supported boards:
+
++Arduino Nano 33 BLE Sense
++SparkFun Edge
++STM32F746 Discovery kit
++Adafruit EdgeBadge
++Adafruit TensorFlow Lite for Microcontrollers Kit
++Adafruit Circuit Playground Bluefruit
++Espressif ESP32-DevKitC
++Espressif ESP-EYE
++Wio Terminal: ATSAMD51
++Himax WE-I Plus EVB Endpoint AI Development Board
++Synopsys DesignWare ARC EM Software Development Platform
++Sony Spresense
+
 
 
