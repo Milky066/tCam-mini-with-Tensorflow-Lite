@@ -22,3 +22,21 @@ itself does not move.
 |   Dry floor    | 
 | Human in frame |
 |  Mopped floor  |
+
+Lepton 3.5 thermal imaging sensor delievers an image in *120 x 160 (height x width)* resolution. A pixel data is of type *unsigned-integer-16bit(uint16)*,
+each pixel data ranges from 0 to 65535 which represents temperature. 
+
+*Prediction Model*
+
+Tensorflow image recognition model consist of 6 layers
+
+
+
+|        | Conv2D | MaxPool2D | Conv2D | MaxPool2D | Flatten | Dense |
+|--------|--------|-----------|--------|-----------|---------|-------|
+| Filter |    6   |     -     |   3    |     -     |    -    |   -   |
+| Kernel |  3 x 3 |     -     | 3 x 3  |     -     |    -    |   -   |
+|PoolSize|    -   |   2 x 2   |    -   |   2 x 2   |    -    |   -   |
+| Node   |    -   |     -     |    -   |     -     |    -    |   4   |
+
+
