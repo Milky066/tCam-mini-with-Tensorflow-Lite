@@ -55,8 +55,10 @@
 #define CMD_FW_UPD_REQ 20
 #define CMD_FW_UPD_SEG 21
 #define CMD_DUMP_SCREEN 22
-#define CMD_NUM (23 + 1)
+#define CMD_NUM (23 + 3)
 #define CMD_PRED_IMAGE 66
+#define CMD_PRED_IMAGE_PERIODIC 67
+#define CMD_GATHER_IMAGES 68
 
 #define CMD_UNKNOWN 999
 
@@ -85,6 +87,8 @@
 #define CMD_FW_UPD_SEG_S "fw_segment"
 #define CMD_DUMP_SCREEN_S "dump_screen"
 #define CMD_PRED_IMAGE_S "predict_image"
+#define CMD_PRED_IMAGE_PRERIODIC_S "predict_image_periodic"
+#define CMD_GATHER_IMAGES_S "gather_images"
 
 // Delimiters used to wrap json strings sent over the network
 #define CMD_JSON_STRING_START 0x02

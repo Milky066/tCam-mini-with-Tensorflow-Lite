@@ -234,6 +234,7 @@ static void net_cmd_start_mdns()
 
 	// Attempt to initialize mDNS
 	ret = mdns_init();
+
 	if (ret != ESP_OK)
 	{
 		ESP_LOGE(TAG, "Could not initialize mDNS (%d)", ret);

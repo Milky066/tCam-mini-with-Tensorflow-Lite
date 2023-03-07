@@ -127,9 +127,9 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/lepton/cmake_install.cmake")
   include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/cmd/cmake_install.cmake")
   include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/tflite-lib/cmake_install.cmake")
-  include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/main/cmake_install.cmake")
-  include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/static_images/cmake_install.cmake")
   include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/tflite_models/cmake_install.cmake")
+  include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/main/cmake_install.cmake")
+  include("C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/image_utils/cmake_install.cmake")
 
 endif()
 

@@ -354,10 +354,14 @@ static void process_rx_packet()
 				cmd_success = 3;
 				break;
 			case CMD_PRED_IMAGE:
-				// Command for predicting the current frame
 				xTaskNotify(task_handle_rsp, RSP_NOTIFY_CMD_PREDICT_IMG_MASK, eSetBits);
 				break;
-
+			case CMD_PRED_IMAGE_PERIODIC:
+				xTaskNotify(task_handle_rsp, RSP_NOTIFY_CMD_PREDICT_IMG_PERIODIC_MASK, eSetBits);
+				break;
+			case CMD_GATHER_IMAGES:
+				xTaskNotify(task_handle_rsp, RSP_NOTIFY_CMD_GATHER_IMAGES_MASK, eSetBits);
+				break;
 			default:
 				cmd_success = 4;
 			}

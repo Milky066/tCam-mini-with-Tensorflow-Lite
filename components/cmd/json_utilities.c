@@ -47,6 +47,11 @@
 #include "esp_log.h"
 #include <string.h>
 
+// #include "dry_and_human_v4.h"
+// #include "dry_and_human_v4_settings.h"
+
+int const labelCount = 2;
+
 //
 // JSON Utilities internal constants
 //
@@ -85,7 +90,9 @@ const cmd_name_t command_list[CMD_NUM] = {
 	{CMD_FW_UPD_REQ_S, CMD_FW_UPD_REQ},
 	{CMD_FW_UPD_SEG_S, CMD_FW_UPD_SEG},
 	{CMD_DUMP_SCREEN_S, CMD_DUMP_SCREEN},
-	{CMD_PRED_IMAGE_S, CMD_PRED_IMAGE}};
+	{CMD_PRED_IMAGE_S, CMD_PRED_IMAGE},
+	{CMD_PRED_IMAGE_PRERIODIC_S, CMD_PRED_IMAGE_PERIODIC},
+	{CMD_GATHER_IMAGES_S, CMD_GATHER_IMAGES}};
 
 //
 // JSON Utilities variables
@@ -112,6 +119,8 @@ static void json_free_cci_reg_base64_data();
 static bool json_add_metadata_object(cJSON *parent);
 static uint32_t json_generate_response_string(cJSON *root, char *json_string);
 static bool json_ip_string_to_array(uint8_t *ip_array, char *ip_string);
+static bool json_add_prediction_result(cJSON *parent, lep_buffer_t *lep_buffer, float *prediction_pointer, uint8_t *state_buffer, uint8_t state_index);
+static bool json_add_prediction_image_object(cJSON *parent, lep_buffer_t *lep_buffer, uint8_t *resized_img);
 
 //
 // JSON Utilities API
@@ -168,6 +177,16 @@ cJSON *json_get_cmd_object(char *json_string)
  */
 uint32_t json_get_image_file_string(char *json_image_text, lep_buffer_t *lep_buffer)
 {
+	/*
+	lep_buffer_t{
+		bool telem_valid;
+		uint16_t lep_min_val;
+		uint16_t lep_max_val;
+		uint16_t *lep_bufferP; image pointer start
+		uint16_t *lep_telemP; telemetry pointer start
+		SemaphoreHandle_t lep_mutex; Semaphore handler variable
+	}
+	*/
 	bool success;
 	int len = 0;
 	cJSON *root;
@@ -1130,12 +1149,12 @@ const char *json_get_cmd_name(int cmd)
 static bool json_add_lep_image_object(cJSON *parent, lep_buffer_t *lep_buffer)
 {
 	size_t base64_obj_len;
-	ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
-	// Get the necessary length and allocate a buffer
+	// ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
+	//  Get the necessary length and allocate a buffer
 	(void)mbedtls_base64_encode(base64_lep_data, 0, &base64_obj_len,
 								(const unsigned char *)lep_buffer->lep_bufferP, LEP_NUM_PIXELS * 2);
 	base64_lep_data = heap_caps_malloc(base64_obj_len, MALLOC_CAP_SPIRAM);
-	ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
+	// ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
 	if (base64_lep_data != NULL)
 	{
 		// Base-64 encode the camera data
@@ -1154,7 +1173,7 @@ static bool json_add_lep_image_object(cJSON *parent, lep_buffer_t *lep_buffer)
 		ESP_LOGE(TAG, "failed to allocate %d bytes for lepton image base64 text", base64_obj_len);
 		return false;
 	}
-	ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
+	// ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
 
 	// Add the encoded data as a reference since we're managing the buffer
 	// 31/1/2023 : base64 to converted into some kind of special encode, exploring further.
@@ -1414,7 +1433,7 @@ static bool json_ip_string_to_array(uint8_t *ip_array, char *ip_string)
 	return true;
 }
 
-uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *lep_buffer)
+uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *lep_buffer, float *prediction_pointer, uint8_t *resize_img, uint8_t *state_buffer, uint8_t state_buffer_index)
 {
 	bool success;
 	int len = 0;
@@ -1428,15 +1447,15 @@ uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *le
 	success = json_add_metadata_object(root);
 	if (success)
 	{
-		success = json_add_lep_image_object(root, lep_buffer);
+		// success = json_add_prediction_image_object(root, lep_buffer, resize_img);
 		if (success)
 		{
-			success = json_add_lep_telem_object(root, lep_buffer);
-			if (!success)
-			{
-				// Free lep_image that was already allocated
-				json_free_lep_base64_image();
-			}
+			success = json_add_prediction_result(root, lep_buffer, prediction_pointer, state_buffer, state_buffer_index);
+			// if (!success)
+			// {
+			// 	// Free lep_image that was already allocated
+			// 	json_free_lep_base64_image();
+			// }
 		}
 	}
 
@@ -1453,8 +1472,7 @@ uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *le
 		}
 
 		// Free the base-64 converted image strings
-		json_free_lep_base64_image();
-		json_free_lep_base64_telem();
+		// json_free_lep_base64_image();
 	}
 	else
 	{
@@ -1466,8 +1484,112 @@ uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *le
 	return len;
 }
 
-static bool json_add_prediction_result(cJSON *parent)
+static bool json_add_prediction_result(cJSON *parent, lep_buffer_t *lep_buffer, float *prediction_pointer, uint8_t *state_buffer, uint8_t state_index)
 {
+	const char *labels[] = {"Dry", "Wet", "Human", "Wiped"};
+	uint8_t state_count[5] = {0, 0, 0, 0, 0};
+	char result_buffer[200];
+	cJSON *prediction;
+	int result_size = 0;
+
+	uint8_t max_probability_index = 0;
+	uint8_t max_state_index = 0;
+
+	for (int i = 0; i < labelCount; i++)
+	{
+		// printf("%d : %f\n", i, prediction_pointer[i]);
+		if (prediction_pointer[i] > prediction_pointer[max_probability_index])
+		{
+			max_probability_index = i;
+		}
+	}
+
+	// int result_buffer_size = snprintf(result_buffer, sizeof(result_buffer), "dry: %f wet: %f human: %f wiped: %f", prediction_pointer[0], prediction_pointer[1], prediction_pointer[2], prediction_pointer[3]);
+	if (state_index < 9)
+	{
+		result_size = snprintf(result_buffer, sizeof(result_buffer), "INDEX[%d] [%2d][%2d][%2d][%2d][%2d][%2d][%2d][%2d][%2d][%2d] dry: %.7f wet: %.7f human: %.7f wiped: %.7f",
+							   state_index,
+							   state_buffer[0],
+							   state_buffer[1],
+							   state_buffer[2], state_buffer[3],
+							   state_buffer[4], state_buffer[5],
+							   state_buffer[6], state_buffer[7],
+							   state_buffer[8], state_buffer[9],
+							   prediction_pointer[0], prediction_pointer[1],
+							   prediction_pointer[2], prediction_pointer[3]);
+	}
+	else
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			switch (state_buffer[i])
+			{
+			case 0:
+				state_count[0]++;
+				break;
+			case 1:
+				state_count[1]++;
+				break;
+			case 2:
+				state_count[2]++;
+				break;
+			case 3:
+				state_count[3]++;
+				break;
+
+			default:
+				state_count[4]++;
+			}
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			if (state_count[i] > state_count[max_state_index])
+			{
+
+				max_state_index = i;
+			}
+		}
+
+		result_size = snprintf(result_buffer, sizeof(result_buffer), "Final floor state: %s ------- [%d][%d][%d][%d]",
+							   labels[max_state_index],
+							   state_count[0], state_count[1], state_count[2], state_count[3]);
+	}
+
+	// ESP_LOGI(TAG, "Result length: %d", result_size);
+	cJSON_AddItemToObject(parent, "prediction", prediction = cJSON_CreateObject());
+	cJSON_AddStringToObject(prediction, "result", result_buffer);
+
+	return true;
+}
+
+static bool json_add_prediction_image_object(cJSON *parent, lep_buffer_t *lep_buffer, uint8_t *resized_img)
+{
+	size_t base64_obj_len;
+	// ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
+	//  Get the necessary length and allocate a buffer
+	(void)mbedtls_base64_encode(base64_lep_data, 0, &base64_obj_len,
+								resized_img, 40 * 30 * 2);
+	base64_lep_data = heap_caps_malloc(base64_obj_len, MALLOC_CAP_SPIRAM);
+	// ESP_LOGI(TAG, "Buffer pointer: %p", lep_buffer->lep_bufferP);
+	if (base64_lep_data != NULL)
+	{
+		// Base-64 encode the camera data
+		if (mbedtls_base64_encode(base64_lep_data, base64_obj_len, &base64_obj_len,
+								  resized_img,
+								  40 * 30 * 2) != 0)
+		{
+
+			ESP_LOGE(TAG, "failed to encode resized image base64 text");
+			free(base64_lep_data);
+			return false;
+		}
+	}
+	else
+	{
+		ESP_LOGE(TAG, "failed to allocate %d bytes for lepton image base64 text", base64_obj_len);
+		return false;
+	}
+	cJSON_AddItemToObject(parent, "radiometric", cJSON_CreateStringReference((char *)base64_lep_data));
 
 	return true;
 }

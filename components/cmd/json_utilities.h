@@ -69,7 +69,7 @@ extern "C"
     bool json_parse_fw_segment(cJSON *cmd_args, uint32_t *start, uint32_t *len, uint8_t *buf);
     void json_free_cmd(cJSON *cmd);
     const char *json_get_cmd_name(int cmd);
-    uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *lep_buffer);
+    uint32_t json_get_prediction_file_string(char *json_image_text, lep_buffer_t *lep_buffer, float *prediction_pointer, uint8_t *resize_img, uint8_t *state_buffer, uint8_t state_buffer_index);
 
 #ifdef __cplusplus
 }

@@ -308,7 +308,7 @@ bool system_buffer_init()
 	sys_cmd_response_buffer.length = 0;
 
 	// Allocate the json image text buffer in DMA capable internal memory
-	sys_image_rsp_buffer.bufferP = heap_caps_malloc(JSON_MAX_IMAGE_TEXT_LEN, MALLOC_CAP_DMA);
+	sys_image_rsp_buffer.bufferP = heap_caps_malloc(JSON_MAX_IMAGE_TEXT_LEN, MALLOC_CAP_SPIRAM);
 	if (sys_image_rsp_buffer.bufferP == NULL)
 	{
 		ESP_LOGE(TAG, "malloc shared json image text response buffer failed");

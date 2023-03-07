@@ -29,6 +29,7 @@
 #include "ctrl_task.h"
 #include "net_cmd_task.h"
 #include "rsp_task.h"
+#include "tflite_task.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/gpio.h"

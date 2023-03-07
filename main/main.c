@@ -19,6 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with tCam.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "sys_utilities.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
@@ -31,11 +33,12 @@
 #include "mon_task.h"
 #include "rsp_task.h"
 #include "system_config.h"
-#include "sys_utilities.h"
 
 #include "tflite_task.h"
 
 static const char *TAG = "main";
+StaticTask_t rsp_task_tcb;
+StackType_t *rsp_task_stack;
 
 void app_main(void)
 {
@@ -74,7 +77,7 @@ void app_main(void)
     }
 
     // Pre-allocate big buffers
-    // 31/1/2023: Not really sure what is this for just yet, comes back later
+
     if (!system_buffer_init())
     {
         ESP_LOGE(TAG, "Memory allocate failed");
@@ -85,17 +88,17 @@ void app_main(void)
         }
     }
 
-    if (!tflite_init())
-    {
-        ESP_LOGE(TAG, "TfLite initilisation fails");
-    }
-
     // Delay for Lepton internal initialization on power-on (max 950 mSec)
     vTaskDelay(pdMS_TO_TICKS(900));
 
     // Notify control task that we've successfully started up
     xTaskNotify(task_handle_ctrl, CTRL_NOTIFY_STARTUP_DONE, eSetBits);
 
+    if (!tflite_init())
+    {
+        ESP_LOGE(TAG, "TfLite initilisation fails");
+    }
+    rsp_task_stack = heap_caps_calloc(1, sizeof(StackType_t) * 1024 * 8, MALLOC_CAP_SPIRAM);
     // Start tasks
     // 30/1/2023: Add ML task into Core 0,
     //  Core 0 : PRO - everything but lepton task
@@ -108,10 +111,14 @@ void app_main(void)
     }
     else // 30/1/2022: tCam rev2 uses this below
     {
-        xTaskCreatePinnedToCore(net_cmd_task, "net_cmd_task", 3072, NULL, 1, &task_handle_cmd, 0);
-        xTaskCreatePinnedToCore(rsp_task, "rsp_task", 2816, NULL, 19, &task_handle_rsp, 0);
+
+        xTaskCreatePinnedToCore(net_cmd_task, "net_cmd_task", 3072, NULL, 1, &task_handle_cmd, 0); // 3072
+        // Uncomment below to include tflite_task into the prediction loop
         xTaskCreatePinnedToCore(lep_task, "lep_task", 2048, NULL, 19, &task_handle_lep, 1);
-        // xTaskCreatePinnedToCore(tflite_task, "tflift_task", 1024 * 25, NULL, 19, &task_handle_tflite, 0);
+        // xTaskCreatePinnedToCore(rsp_task, "rsp_task", 2816, NULL, 19, &task_handle_rsp, 0); // 2816 Stack depth
+        task_handle_rsp = xTaskCreateStaticPinnedToCore(rsp_task, "rsp_task", 1024 * 8, NULL, 19, rsp_task_stack, &rsp_task_tcb, 0);
+        // 21/2/2023: Currently the task is idle
+        // xTaskCreatePinnedToCore(&tflite_task, "tflift_task", 2048, NULL, 18, &task_handle_tflite, 0);
     }
 
 #ifdef INCLUDE_SYS_MON

@@ -248,7 +248,7 @@ LEGACY_INCLUDE_COMMON_HEADERS:UNINITIALIZED=
 PROJECT_SOURCE_DIR:UNINITIALIZED=C:/Users/Mil/esp_idf_projects/tCam_esp_idf
 
 //No help, variable specified on the command line.
-PYTHON:UNINITIALIZED=C:/Users/Mil/esp/tools/python_env/idf4.4_py3.8_env/Scripts/python.exe
+PYTHON:UNINITIALIZED=c:/Users/Mil/esp/tools/python_env/idf4.4_py3.8_env/Scripts/python.exe
 
 //No help, variable specified on the command line.
 PYTHON_DEPS_CHECKED:UNINITIALIZED=1

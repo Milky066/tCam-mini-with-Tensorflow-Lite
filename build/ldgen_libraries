@@ -75,6 +75,6 @@ C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/sys/libsys.a
 C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/lepton/liblepton.a
 C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/cmd/libcmd.a
 C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/tflite-lib/libtflite-lib.a
-C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/main/libmain.a
-C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/static_images/libstatic_images.a
 C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/tflite_models/libtflite_models.a
+C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/main/libmain.a
+C:/Users/Mil/esp_idf_projects/tCam_esp_idf/build/esp-idf/image_utils/libimage_utils.a

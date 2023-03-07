@@ -63,14 +63,21 @@
 //
 // RSP Task variables
 //
+
+#define MON_MAX_TASKS 12
 static const char *TAG = "rsp_task";
+
+const int prediction_interval = 5; // In second
 
 // State
 static bool connected;
 static bool stream_on;
 static bool image_pending;
 static bool got_image_0, got_image_1;
+static bool getting_image;
 static bool predict_image;
+static bool predict_image_periodic;
+static bool gather_images;
 
 // Stream rate/duration control
 static uint32_t next_stream_frame_delay_msec; // mSec between images; 0 = fast as possible
@@ -114,6 +121,7 @@ static void send_get_fw();
 //
 // RSP Task API
 //
+int tick_count = 0;
 void rsp_task()
 {
 	int len;
@@ -153,7 +161,6 @@ void rsp_task()
 		}
 		else
 		{
-			// printf("Checking net_cmd_connected()\n");
 			if (net_cmd_connected())
 			{
 				connected = true;
@@ -165,14 +172,15 @@ void rsp_task()
 			}
 		}
 
-		// Look for things to send
-		if ((got_image_0 || got_image_1) && !predict_image)
+		if ((got_image_0 || got_image_1) && !predict_image && !predict_image_periodic && !gather_images)
 		{
 			if (connected)
+
 			{
 				if (got_image_0)
 				{
 					len = process_image(0);
+
 					got_image_0 = false;
 #ifdef LOG_IMG_TIMESTAMP
 					ESP_LOGI(TAG, "process image 0");
@@ -181,6 +189,7 @@ void rsp_task()
 				else
 				{
 					len = process_image(1);
+
 					got_image_1 = false;
 #ifdef LOG_IMG_TIMESTAMP
 					ESP_LOGI(TAG, "process image 1");
@@ -222,7 +231,7 @@ void rsp_task()
 			{
 				if (got_image_0)
 				{
-					predict_image_from_buffer(0);
+					len = predict_image_from_buffer(0);
 					got_image_0 = false;
 #ifdef LOG_IMG_TIMESTAMP
 					ESP_LOGI(TAG, "predict image 0");
@@ -230,31 +239,77 @@ void rsp_task()
 				}
 				else
 				{
-					predict_image_from_buffer(1);
+					len = predict_image_from_buffer(1);
+					// TODO: Send notification to TFLite task to let it handle the prediction, don't do it here!
 					got_image_1 = false;
 #ifdef LOG_IMG_TIMESTAMP
 					ESP_LOGI(TAG, "predict image 1");
 #endif
 				}
-				predict_image = false;
+				if (predict_image_periodic)
+				{
+					ESP_LOGI(TAG, "Periodic prediction");
+					predict_image = true;
+					image_pending = true;
+				}
+				else
+				{
+					predict_image = false;
+					image_pending = false;
+				}
 
-				// Send the image
-				// if (len != 0)
-				// {
-				// 	if (if_type == CTRL_IF_MODE_SIF)
-				// 	{
-				// 		// Configure a SPI slave response if the slave is available,
-				// 		// otherwise drop the response
-				// 		if (!system_spi_slave_busy())
-				// 		{
-				// 			send_spi_image(sys_image_rsp_buffer.bufferP, sys_image_rsp_buffer.length);
-				// 		}
-				// 	}
-				// 	else
-				// 	{
-				// 		send_response(sys_image_rsp_buffer.bufferP, sys_image_rsp_buffer.length, false);
-				// 	}
-				// }
+				// Send the image and prediction result
+				if (len != 0)
+				{
+					if (if_type == CTRL_IF_MODE_SIF)
+					{
+						// Configure a SPI slave response if the slave is available,
+						// otherwise drop the response
+						if (!system_spi_slave_busy())
+						{
+							send_spi_image(sys_image_rsp_buffer.bufferP, sys_image_rsp_buffer.length);
+						}
+					}
+					else
+					{
+						send_response(sys_image_rsp_buffer.bufferP, sys_image_rsp_buffer.length, false);
+					}
+				}
+
+				// If streaming, determine if we have sent the required number of images if necessary
+				if (stream_on && (cur_stream_frame_num != 0))
+				{
+					if (--stream_remaining_frames == 0)
+					{
+						stream_on = false;
+					}
+				}
+			}
+		}
+
+		if ((got_image_0 || got_image_1) && gather_images)
+		{
+			if (connected)
+
+			{
+				if (got_image_0)
+				{
+					len = gather_images_to_sheet(0, 66, 0);
+
+					got_image_0 = false;
+#ifdef LOG_IMG_TIMESTAMP
+					ESP_LOGI(TAG, "gather image 0");
+#endif
+				}
+				else
+				{
+					len = gather_images_to_sheet(1, 66, 0);
+
+					got_image_1 = false;
+#ifdef LOG_IMG_TIMESTAMP
+					ESP_LOGI(TAG, "gather image 1");
+#endif
+				}
 
 				// If streaming, determine if we have sent the required number of images if necessary
 				if (stream_on && (cur_stream_frame_num != 0))
@@ -270,7 +325,7 @@ void rsp_task()
 		if (cmd_response_available())
 		{
 			// Get the command response and send it if possible
-			printf("Command response available\n");
+			ESP_LOGI(TAG, "Command response available\n");
 			len = get_cmd_response();
 			if (connected && (len != 0))
 			{
@@ -314,12 +369,17 @@ void rsp_task()
 		}
 
 		// Sleep task - less if we are streaming
-		if (stream_on)
+		if (stream_on && !predict_image_periodic)
 		{
 			vTaskDelay(pdMS_TO_TICKS(RSP_TASK_EVAL_FAST_MSEC));
 		}
+		else if (!stream_on && predict_image_periodic)
+		{
+			vTaskDelay(pdMS_TO_TICKS(prediction_interval * 1000));
+		}
 		else
 		{
+
 			vTaskDelay(pdMS_TO_TICKS(RSP_TASK_EVAL_NORM_MSEC));
 		}
 	}
@@ -398,9 +458,12 @@ static void init_state()
 	image_pending = false;
 	got_image_0 = false;
 	got_image_1 = false;
+	getting_image = false;
 	fw_update_state = FW_UPD_IDLE;
 
 	predict_image = false;
+	predict_image_periodic = false;
+	gather_images = false;
 	// Flush the command response buffer
 	xSemaphoreTake(sys_cmd_response_buffer.mutex, portMAX_DELAY);
 	sys_cmd_response_buffer.length = 0;
@@ -616,11 +679,39 @@ static void handle_notifications()
 		{
 
 			image_pending = true;
-
 			// Stop any on-going streaming
 			stream_on = false;
-
 			predict_image = true;
+			// Stop on-going prediction cycle
+			predict_image_periodic = false;
+		}
+
+		if (Notification(notification_value, RSP_NOTIFY_CMD_PREDICT_IMG_PERIODIC_MASK))
+		{
+
+			image_pending = true;
+			stream_on = false;
+			predict_image_periodic = !predict_image_periodic;
+			predict_image = predict_image_periodic;
+			if (predict_image_periodic)
+			{
+				ESP_LOGI(TAG, "Start prediction");
+			}
+			else
+			{
+				ESP_LOGI(TAG, "Stop prediction");
+				image_pending = false;
+				got_image_0 = false;
+				got_image_1 = false;
+			}
+		}
+
+		if (Notification(notification_value, RSP_NOTIFY_CMD_GATHER_IMAGES_MASK))
+		{
+			gather_images = true;
+			image_pending = true;
+			predict_image_periodic = false;
+			predict_image = false;
 		}
 	}
 }

@@ -70,8 +70,9 @@
 #define RSP_NOTIFY_FW_UPD_SEG_MASK 0x00000200
 #define RSP_NOTIFY_FW_UPD_EN_MASK 0x00000400
 #define RSP_NOTIFY_FW_UPD_END_MASK 0x00000800
-#define RSP_NOTIFY_CMD_PREDICT_IMG_MASK 0x00001000 // Addtional command for TFLite
-
+#define RSP_NOTIFY_CMD_PREDICT_IMG_MASK 0x00001000          // Addtional command for TFLite
+#define RSP_NOTIFY_CMD_PREDICT_IMG_PERIODIC_MASK 0x00002000 // Addtional command for periodically prediction
+#define RSP_NOTIFY_CMD_GATHER_IMAGES_MASK 0x00004000
 //
 // RSP Task API
 //

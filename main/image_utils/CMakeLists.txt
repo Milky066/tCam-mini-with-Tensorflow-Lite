@@ -4,5 +4,5 @@
 #
 
 idf_component_register(
-    SRCS image_util.c Issh.h mtmn.h frmn.h
+    SRCS image_util.c lssh.h mtmn.h frmn.h stb_image_resize.h
     INCLUDE_DIRS "")

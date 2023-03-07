@@ -75,6 +75,6 @@ $<TARGET_FILE:__idf_sys>
 $<TARGET_FILE:__idf_lepton>
 $<TARGET_FILE:__idf_cmd>
 $<TARGET_FILE:__idf_tflite-lib>
-$<TARGET_FILE:__idf_main>
-$<TARGET_FILE:__idf_static_images>
 $<TARGET_FILE:__idf_tflite_models>
+$<TARGET_FILE:__idf_main>
+$<TARGET_FILE:__idf_image_utils>
