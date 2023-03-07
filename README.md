@@ -100,7 +100,7 @@ The reason why "input = interpreter->input(0)" is due to the model using just on
 to input(1), input(2) and so on.
 
 
-2. The model was trained with **normalised float32** representation of the same data, before we feed an image into the model we have to nomalise the pixel data. Here is the method used for normalising.
+2. The model was trained with **normalised float32** representation of the same data, before we feed an image into the model we have to nomalise the pixel data. Here is the method used for normalising later on.
 ```
 static void _normalise_image_uint16(float *dest_img, uint16_t *src_img, int src_width, int src_height, int src_channel)
 {
@@ -137,7 +137,7 @@ Allocate some memory for storing image data.
 ```
 const int PIXEL_COUNT = 120 * 160;
 uint16_t *image_buffer = (uint16_t *)heap_caps_malloc(PIXEL_COUNT * sizeof(uint16_t), MALLOC_CAP_SPIRAM);
-uint16_t resized_img = (uint16_t *)heap_caps_malloc(RESIZED_IMAGE_SIZE_BYTE, MALLOC_CAP_SPIRAM);
+uint16_t *resized_imgage = (uint16_t *)heap_caps_malloc(RESIZED_IMAGE_SIZE_BYTE, MALLOC_CAP_SPIRAM);
 uint16_t *rsp_buffer_pointer = ((lep_buffer_t *)&rsp_lep_buffer[image_number])->lep_bufferP;
 ```
 Get the pixel data from Lepton buffer
@@ -145,7 +145,7 @@ Get the pixel data from Lepton buffer
 xSemaphoreTake(rsp_lep_buffer[image_number].lep_mutex, portMAX_DELAY); 
     for (int pixel = 0; pixel < PIXEL_COUNT; pixel++)
     {
-        img_buffer[pixel] = rsp_buffer_pointer[pixel];
+        image_buffer[pixel] = rsp_buffer_pointer[pixel];
     }
 xSemaphoreGive(rsp_lep_buffer[image_number].lep_mutex);
 ```
@@ -156,19 +156,45 @@ extern const char image_start[] asm("_binary_{YOUR IMAGE NAME}_start");
 extern const char image_end[] asm("_binary_{YOUR IMAGE NAME}_end");
 ```
 Now we have to resize from 120 x 160 to 30 x 40  
-I am using stbir library to resize the image.
+I am using **stbir library** to resize the image.  
+All the thanks to **Jorge L Rodriguez**
 [Here](https://github.com/nothings/stb/blob/master/stb_image_resize.h) you can find the files
+
+Resizing and Normalising the images
 ```
 stbir_resize_uint16_generic(img_buffer, 160, 120, 0, resized_img, IMAGE_WIDTH, IMAGE_HEIGHT, 0, IMAGE_CHANNEL, -1, 0,
                                 STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT, STBIR_COLORSPACE_LINEAR, NULL);
+_normalise_image_uint16(input->data.f, resized_image, IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNEL);
 ```
 
-4. Feeding in the pixel data
+4. Feeding in the pixel data, this is **inside the normalising method**
 ```
 const int RESIZED_PIXEL_COUNT = 30 * 40;
 for(int i = 0; i < RESIZED_PIXEL_COUNT; i++){
-    input->data.f[i] = resized_img[i]
+    input->data.f[i] = resized_image[i]
 }
+```
+5. Invoke the model, do the prediction.
+```
+interpreter->Invoke();
+```
+6. Get the output
+```
+TfLiteTensor *output = interpreter->output(0);
+uint8_t max_probability_index = 0;
+for (int i = 0; i < LABEL_COUNT; i++)
+   {
+    if (output->data.f[i] > output->data.f[max_probability_index])
+       {
+           max_probability_index = i;
+        }
+   }
+printf("Label predicted: %d with probability of %.2f", max_probability_index, output->data.f[max_probability_index]);
+```
+7. Free the memory allocated for images
+```
+free(resized_image);
+free(image_buffer);
 ```
 
 
