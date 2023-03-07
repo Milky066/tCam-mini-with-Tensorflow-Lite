@@ -149,7 +149,7 @@ xSemaphoreTake(rsp_lep_buffer[image_number].lep_mutex, portMAX_DELAY);
     }
 xSemaphoreGive(rsp_lep_buffer[image_number].lep_mutex);
 ```
-If you're using **embedded image**, replace "." file extension with "_"
+If you're using **embedded image**, replace "." file extension with "_"  
 For example, "_binary_image1_jpg_start"
 ```
 extern const char image_start[] asm("_binary_{YOUR IMAGE NAME}_start");
