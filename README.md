@@ -29,13 +29,23 @@ each pixel data ranges from 0 to 65535 which represents temperature.
 ## Prediction Model
 
 The Tensorflow image recognition model that we are using(version 13) consist of 6 layers
-
+Start =============================================================> Finish
 |        | Conv2D | MaxPool2D | Conv2D | MaxPool2D | Flatten | Dense |
 |--------|--------|-----------|--------|-----------|---------|-------|
 | Filter |    6   |     -     |   3    |     -     |    -    |   -   |
 | Kernel |  3 x 3 |     -     | 3 x 3  |     -     |    -    |   -   |
 |PoolSize|    -   |   2 x 2   |    -   |   2 x 2   |    -    |   -   |
 | Node   |    -   |     -     |    -   |     -     |    -    |   4   |
+
+```
+model = keras.models.Sequential()
+model.add(keras.layers.Conv2D(6, (3, 3), activation='relu', input_shape=new_train_image_jpg[0].shape))
+model.add(keras.layers.MaxPool2D((2, 2)))
+model.add(keras.layers.Conv2D(3, (3, 3), activation='relu'))
+model.add(keras.layers.MaxPool2D((2, 2)))
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(4,activation='softmax'))
+```
 
 NOTE: The Python file used will be uploaded later on, I'll need to tidy things up.
 
