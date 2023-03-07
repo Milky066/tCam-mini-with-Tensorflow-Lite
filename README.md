@@ -94,7 +94,8 @@ input = interpreter->input(0);
 
 ```
 
-NOTE: For TENSOR_AREANA_SIZE_BYTE, it depends on the model used, once we have allocated the tensors we should    call **"interpreter->arena_used_bytes()"** to read the    actual size.
+NOTE: For TENSOR_AREANA_SIZE_BYTE, it depends on the model used, once we have allocated the tensors we should  
+call **"interpreter->arena_used_bytes()"** to read the    actual size.
 
 The reason why "input = interpreter->input(0)" is due to the model using just one tensor per prediction, if the model was to use more than one, we should assign more 
 to input(1), input(2) and so on.
