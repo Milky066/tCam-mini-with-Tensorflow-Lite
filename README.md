@@ -1,10 +1,15 @@
 ## tCam-Mini Firmware
 tCam-Mini firmware is an Espressif IDF project.  You need to have the Espressif v4.4.2 IDF installed to build the firmware.  Pre-compiled binary files are provided (```precompiled``` directory here) and can be programmed using the IDF tools or a Windows utility as described in the ```programming``` directory elsewhere in this repostitory.
 
+<<<<<<< HEAD
 ### Building
 The ```sdkconfig``` file contains ESP32 configuration and build-specific information.  All camera-specific configuration is in the ```main/system_config.h``` file.
 
 To build the project: ```idf.py build```
+=======
+This project is based on the tCam thermal imaging sensor made by Dan Julio.
+[Here is the original repository](https://github.com/danjulio/tCam)
+>>>>>>> parent of dd3c5a7 (Update README.md)
 
 To load the project onto tCam-Mini: 
 
@@ -568,6 +573,7 @@ The OTA FW update process consists of several steps.  The FW is contained in the
 | 217 | Spot Meter X2 coordinate |
 
 
+<<<<<<< HEAD
 | Bit | Status Bit Description |
 | --- | --- |
 | 20 | Over Temperature Shut Down imminent (shutdown in 10 seconds) |
@@ -587,3 +593,5 @@ The radiometric pixel temperature in °C may be computed using the following for
 The Spot Meter average temperature value is computed using the same formula, substituting the Spot Meter Mean for pixel data, and is valid independent of AGC enabled or disabled.  The Spot Meter is the average value of the pixels in the box defined by the Spot Meter (X1, Y1) and (X2, Y2) coordinates.
 
 The FFC State may be used to identify when the lepton is preparing to perform a FFC (flat field correction) and is performing a FFC.  While performing a FFC the lepton closes the shutter in front of the sensor array.  Image data is not available while a FFC is being performed.
+=======
+>>>>>>> parent of dd3c5a7 (Update README.md)
