@@ -86,7 +86,7 @@ micro_op_resolver.AddSoftmax();
 micro_op_resolver.AddFullyConnected();
 micro_op_resolver.AddLogistic();
     
-static tflite::MicroInterpreter static_interpreter(model, micro_op_resolver, tensor_arena, TENSOR_AREANA_SIZE_BYTE); // Constructor object creation
+static tflite::MicroInterpreter static_interpreter(model, micro_op_resolver, tensor_arena, TENSOR_AREANA_SIZE_BYTE);
 interpreter = &static_interpreter;
 interpreter->AllocateTensors();
 
@@ -133,6 +133,28 @@ Example:
 + For FlatBuffer, it is instead 16 in size 1D array(or Tensor)  
 [0.2342] [0.43534] [0.14123] [0.64443] ...... [0.84782] [0.74638] [0.94773]  
 
+Allocate some memory for storing image data.  
+```
+const int PIXEL_COUNT = 120 * 160;
+uint16_t *image_buffer = (uint16_t *)heap_caps_malloc(PIXEL_COUNT * sizeof(uint16_t), MALLOC_CAP_SPIRAM);
+uint16_t resized_img = (uint16_t *)heap_caps_malloc(RESIZED_IMAGE_SIZE_BYTE, MALLOC_CAP_SPIRAM);
+uint16_t *rsp_buffer_pointer = ((lep_buffer_t *)&rsp_lep_buffer[image_number])->lep_bufferP;
+```
+Get the pixel data from Lepton buffer
+```
+xSemaphoreTake(rsp_lep_buffer[image_number].lep_mutex, portMAX_DELAY); 
+    for (int pixel = 0; pixel < PIXEL_COUNT; pixel++)
+    {
+        img_buffer[pixel] = rsp_buffer_pointer[pixel];
+    }
+xSemaphoreGive(rsp_lep_buffer[image_number].lep_mutex);
+```
+If you're using **embedded image**, replace "." file extension with "_"
+For example, "_binary_image1_jpg_start"
+```
+extern const char image_start[] asm("_binary_{YOUR IMAGE NAME}_start");
+extern const char image_end[] asm("_binary_{YOUR IMAGE NAME}_end");
+```
 
 
 
