@@ -150,11 +150,28 @@ xSemaphoreTake(rsp_lep_buffer[image_number].lep_mutex, portMAX_DELAY);
 xSemaphoreGive(rsp_lep_buffer[image_number].lep_mutex);
 ```
 If you're using **embedded image**, replace "." file extension with "_"  
-For example, "_binary_image1_jpg_start"
+For example, "image1.jpg" to "_binary_image1_jpg_start"
 ```
 extern const char image_start[] asm("_binary_{YOUR IMAGE NAME}_start");
 extern const char image_end[] asm("_binary_{YOUR IMAGE NAME}_end");
 ```
+Now we have to resize from 120 x 160 to 30 x 40  
+I am using stbir library to resize the image.
+[Here](https://github.com/nothings/stb/blob/master/stb_image_resize.h) you can find the files
+```
+stbir_resize_uint16_generic(img_buffer, 160, 120, 0, resized_img, IMAGE_WIDTH, IMAGE_HEIGHT, 0, IMAGE_CHANNEL, -1, 0,
+                                STBIR_EDGE_CLAMP, STBIR_FILTER_DEFAULT, STBIR_COLORSPACE_LINEAR, NULL);
+```
+
+4. Feeding in the pixel data
+```
+const int RESIZED_PIXEL_COUNT = 30 * 40;
+for(int i = 0; i < RESIZED_PIXEL_COUNT; i++){
+    input->data.f[i] = resized_img[i]
+}
+```
+
+
 
 
 
