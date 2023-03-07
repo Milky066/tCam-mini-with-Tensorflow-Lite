@@ -29,7 +29,7 @@ each pixel data ranges from 0 to 65535 which represents temperature.
 ## Prediction Model
 
 The Tensorflow image recognition model that we are using(version 13) consist of 6 layers  
-Start ====>====>====>====>====>====>====>====>====>====>====>====> Finish
+**Start** ====>====>====>====>====>====>====>====>====>====> **Finish**
 |        | Conv2D | MaxPool2D | Conv2D | MaxPool2D | Flatten | Dense |
 |--------|--------|-----------|--------|-----------|---------|-------|
 | Filter |    6   |     -     |   3    |     -     |    -    |   -   |
