@@ -43,6 +43,7 @@ The model input is **30 x 40 pixels** in resolution, this is the most optimal va
 
 Original Tensorflow library uses too much memory and is computationally too complex to use in an embedded system.
 Tensorflow Lite compresses the orignal model down to make operations in embedded systems possible.
+
 List of the supported boards:
 
 + Arduino Nano 33 BLE Sense
