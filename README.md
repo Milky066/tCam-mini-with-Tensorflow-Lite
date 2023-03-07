@@ -121,17 +121,17 @@ static void _normalise_image_uint16(float *dest_img, uint16_t *src_img, int src_
 ```
 3. Now it's time to feed the data into the model. If you're familiar with Tensorflow or PyTorch, when we actually feed in a **Tensor** or an **Array** but, for microcontroller, the model input is converted to FlatBuffer format which is just a long one dimensional array of pixel data in our case, it has no sense of **shape** so we have to be careful when feeding the image.
 
-Example:__
-+ 4 x 4 pixels grascale image 2D Tensor has the shape of (4, 4, 1) the last being its channel, the values would look like this__
-[__
-[0.2342] [0.43534] [0.14123] [0.64443]__
-[0.5234] [0.64532] [0.32113] [0.68947]__
-[0.3242] [0.54545] [0.99504] [0.36684]__
-[0.8628] [0.84782] [0.74638] [0.94773]__
-]__
+Example:  
++ 4 x 4 pixels grascale image 2D Tensor has the shape of (4, 4, 1) the last being its channel, the values would look like this  
+[  
+[0.2342] [0.43534] [0.14123] [0.64443]  
+[0.5234] [0.64532] [0.32113] [0.68947]  
+[0.3242] [0.54545] [0.99504] [0.36684]  
+[0.8628] [0.84782] [0.74638] [0.94773]  
+]  
 
-+ For FlatBuffer, it is instead 16 in size 1D array(or Tensor)__
-[0.2342] [0.43534] [0.14123] [0.64443] ...... [0.84782] [0.74638] [0.94773]
++ For FlatBuffer, it is instead 16 in size 1D array(or Tensor)  
+[0.2342] [0.43534] [0.14123] [0.64443] ...... [0.84782] [0.74638] [0.94773]  
 
 
 
