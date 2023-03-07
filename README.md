@@ -88,6 +88,7 @@ micro_op_resolver.AddLogistic();
     
 static tflite::MicroInterpreter static_interpreter(model, micro_op_resolver, tensor_arena, TENSOR_AREANA_SIZE_BYTE); // Constructor object creation
 interpreter = &static_interpreter;
+interpreter->AllocateTensors();
 
 input = interpreter->input(0);
 
@@ -97,6 +98,40 @@ NOTE: For TENSOR_AREANA_SIZE_BYTE, it depends on the model used, once we have al
 
 The reason why "input = interpreter->input(0)" is due to the model using just one tensor per prediction, if the model was to use more than one, we should assign more 
 to input(1), input(2) and so on.
+
+
+2. The model was trained with **normalised float32** representation of the same data, before we feed an image into the model we have to nomalise the pixel data. Here is the method used for normalising.
+```
+static void _normalise_image_uint16(float *dest_img, uint16_t *src_img, int src_width, int src_height, int src_channel)
+{
+    const int PIXEL_COUNT = src_width * src_height * src_channel;
+    float pixel_max = 0, pixel_min = 65535, pixel_delta = 0;
+    for (int pixel = 0; pixel < PIXEL_COUNT; pixel++)
+    {
+        pixel_max = (src_img[pixel] > pixel_max) ? src_img[pixel] : pixel_max;
+        pixel_min = (src_img[pixel] < pixel_min) ? src_img[pixel] : pixel_min;
+    }
+    pixel_delta = pixel_max - pixel_min;
+
+    for (int pixel = 0; pixel < PIXEL_COUNT; pixel++)
+    {
+        dest_img[pixel] = ((float)src_img[pixel] - pixel_min) / pixel_delta; // Change this to lookup table later on
+    }
+}
+```
+3. Now it's time to feed the data into the model. If you're familiar with Tensorflow or PyTorch, when we actually feed in a **Tensor** or an **Array** but, for microcontroller, the model input is converted to FlatBuffer format which is just a long one dimensional array of pixel data in our case, it has no sense of **shape** so we have to be careful when feeding the image.
+
+Example:
++ 4 x 4 pixels grascale image 2D Tensor has the shape of (4, 4, 1) the last being its channel, the values would look like this
+[
+[0.2342] [0.43534] [0.14123] [0.64443]
+[0.5234] [0.64532] [0.32113] [0.68947]
+[0.3242] [0.54545] [0.99504] [0.36684]
+[0.8628] [0.84782] [0.74638] [0.94773]
+]
+
++ For FlatBuffer, it is instead 16 in size 1D array(or Tensor)
+[0.2342] [0.43534] [0.14123] [0.64443] ...... [0.84782] [0.74638] [0.94773]
 
 
 
